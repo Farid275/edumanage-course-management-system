@@ -16,13 +16,13 @@ const navItems = [
   { path: '/settings', icon: 'settings', label: 'Settings', roles: ['admin', 'lecturer', 'student'], isBottom: true }
 ];
 
-const Sidebar = ({ role = 'admin' }) => {
+const Sidebar = ({ role = 'admin', className = '' }) => {
   const location = useLocation();
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(role));
 
   return (
-    <aside className="hidden lg:flex flex-col h-full border-r border-outline-variant/20 fixed left-0 top-0 w-[280px] bg-primary dark:bg-primary-container z-50">
+    <aside className={`flex-col h-full border-r border-outline-variant/20 bg-primary dark:bg-primary-container z-50 ${className || 'hidden lg:flex fixed left-0 top-0 w-[280px]'}`}>
       <div className="p-container-padding pb-card-gap">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded bg-tertiary-fixed flex items-center justify-center text-primary font-bold text-xl">E</div>
@@ -34,8 +34,8 @@ const Sidebar = ({ role = 'admin' }) => {
         <ul className="space-y-1">
           {filteredNavItems.map((item, index) => {
             const isActive = location.pathname.startsWith(item.path);
-            const activeClasses = "flex items-center gap-base text-secondary-fixed dark:text-secondary-fixed-dim border-l-4 border-secondary-container bg-on-primary-fixed-variant/10 px-4 py-3 font-label-md text-label-md transition-colors duration-200";
-            const inactiveClasses = "flex items-center gap-base text-on-primary/70 dark:text-on-primary-container/70 px-4 py-3 font-label-md text-label-md hover:bg-on-primary-fixed-variant/5 hover:text-white transition-colors duration-200 ml-1";
+            const activeClasses = "flex items-center gap-base text-secondary-fixed dark:text-secondary-fixed-dim border-l-4 border-secondary-container bg-on-primary-fixed-variant/10 px-4 py-3 font-label-md text-label-md transition-all duration-200";
+            const inactiveClasses = "flex items-center gap-base text-on-primary/70 dark:text-on-primary-container/70 border-l-4 border-transparent px-4 py-3 font-label-md text-label-md hover:bg-on-primary-fixed-variant/5 hover:text-white transition-all duration-200";
             
             return (
               <li key={index}>

@@ -1,129 +1,309 @@
-import React from 'react';
-import SummaryCard from '../components/SummaryCard';
-import { lecturers } from '../data/dummyData';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { lecturers as initialLecturers } from '../data/dummyData';
+import PageContainer from '../components/layout/PageContainer';
+import AnimatedModal from '../components/animations/AnimatedModal';
+import SelectField from '../components/ui/SelectField';
 
 const LecturerManagement = () => {
-  const navigate = useNavigate();
+  const [lecturersList, setLecturersList] = useState(() => initialLecturers.map(l => ({
+    id: l.id,
+    lecturer_name: l.name,
+    lecturer_id: l.lecturerId,
+    email: l.email,
+    department: l.department,
+    assigned_courses: Array.isArray(l.courses) ? l.courses.filter(c => !c.startsWith('+')).join(', ') : '',
+    status: l.status === 'On Leave' ? 'Inactive' : l.status, // Map 'On Leave' to 'Inactive' for simplicity
+    created_at: new Date().toISOString().split('T')[0]
+  })));
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [departmentFilter, setDepartmentFilter] = useState('All Departments');
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingLecturer, setEditingLecturer] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    lecturer_name: '',
+    lecturer_id: '',
+    email: '',
+    department: '',
+    assigned_courses: '',
+    status: 'Active',
+    created_at: new Date().toISOString().split('T')[0]
+  });
+
+  const getStatusClass = (status) => {
+    switch(status) {
+      case 'Active': return 'bg-primary-fixed/20 text-on-primary-fixed border border-primary-fixed';
+      case 'Inactive': return 'bg-error-container text-on-error-container border border-error-container';
+      default: return 'bg-surface-variant text-on-surface-variant border border-outline-variant';
+    }
+  };
+
+  const getInitials = (name) => {
+    if (!name) return '??';
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const handleOpenModal = (lecturer = null) => {
+    if (lecturer) {
+      setEditingLecturer(lecturer);
+      setFormData({ ...lecturer });
+    } else {
+      setEditingLecturer(null);
+      setFormData({
+        lecturer_name: '',
+        lecturer_id: `LEC-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+        email: '',
+        department: '',
+        assigned_courses: '',
+        status: 'Active',
+        created_at: new Date().toISOString().split('T')[0]
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingLecturer(null);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (editingLecturer) {
+      setLecturersList(lecturersList.map(l => 
+        l.id === editingLecturer.id ? { ...l, ...formData } : l
+      ));
+    } else {
+      const newLecturer = {
+        id: Date.now(),
+        ...formData
+      };
+      setLecturersList([newLecturer, ...lecturersList]);
+    }
+    handleCloseModal();
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm("Are you sure you want to delete this lecturer?")) {
+      setLecturersList(lecturersList.filter(l => l.id !== id));
+    }
+  };
+
+  const filteredLecturers = lecturersList.filter(l => {
+    const matchesSearch = 
+      l.lecturer_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      l.lecturer_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      l.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      l.department.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    const matchesStatus = statusFilter === 'All' || l.status === statusFilter;
+    const matchesDepartment = departmentFilter === 'All Departments' || l.department === departmentFilter;
+    
+    return matchesSearch && matchesStatus && matchesDepartment;
+  });
+
+  const uniqueDepartments = [...new Set(lecturersList.map(l => l.department))].filter(Boolean);
+
   return (
-    <>
-{/* TopNavBar */}
-    <header className="flex justify-between items-center h-16 px-container-padding w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-surface-container-highest dark:border-outline-variant">
-      <div className="flex items-center gap-4 lg:hidden">
-        <button className="text-on-surface-variant hover:text-primary transition-all">
-          <span className="material-symbols-outlined">menu</span>
-        </button>
-        <span className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary-fixed">EduManage</span>
-      </div>
-      {/* Search Bar (on_left in TopNavBar config) */}
-      <div className="hidden lg:flex items-center bg-surface-container-low border border-surface-container-highest rounded-full px-4 py-2 w-96 focus-within:border-secondary-container focus-within:ring-2 focus-within:ring-secondary-container/20 transition-all">
-        <span className="material-symbols-outlined text-outline text-[20px] mr-2">search</span>
-        <input className="bg-transparent border-none outline-none font-body-sm text-body-sm text-on-surface w-full focus:ring-0 placeholder:text-outline p-0" placeholder="Search lecturers, departments..." type="text" />
-      </div>
-      <div className="flex items-center gap-6 ml-auto">
-        <button className="text-on-surface-variant hover:text-primary transition-all relative group">
-          <span className="material-symbols-outlined text-[24px]">notifications</span>
-          <span className="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border border-surface group-hover:scale-95 duration-150" />
-        </button>
-        <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
-          <img className="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="A professional headshot of a middle-aged academic administrator wearing glasses and a navy blue suit. The background is a brightly lit, modern university office with blurred books on shelves. Clean, bright, and professional lighting suitable for an academic software platform avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuADC_zt-eSmXrfHFdMvNo3iDTW1IDeZHiuXN5diu4deqX2CdkMzdfSzpn36xoF3P_rgeFWRAMT8Hi3sezOmahP85YgYe_siujhcNGD4eLR5G46XzVuevywTmUa-l-zkJY8MnGh0ysmjdWWiqb5fefowEs0leU2lLN-HMtlzlcW6nG7-Rsxw6cbH1oGF6ZztAXtUUhGNOP-Yie7kqqCWrNg4fSdETKvZPIOsd3F2Thkk3NidThCZjrzQnlcSJ_pOLVPDFKTxuzUqreM" />
-          <span className="font-label-md text-label-md text-on-surface-variant hidden md:block">Profile</span>
-        </div>
-      </div>
-    </header>
-    {/* Page Content */}
-    <div className="p-container-padding flex-1">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h2 className="font-headline-xl text-headline-xl text-primary">Lecturers</h2>
+    <PageContainer>
+      {/* Page Header */}
+      <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <h2 className="font-headline-xl text-headline-xl text-primary">Lecturers Management</h2>
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">Manage faculty members, assignments, and departmental roles.</p>
         </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <button className="flex items-center justify-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors w-full md:w-auto">
-            <span className="material-symbols-outlined text-[18px]">filter_list</span>
-            Filters
-          </button>
-          <button className="flex items-center justify-center gap-2 px-4 py-2 bg-tertiary-fixed hover:bg-tertiary-fixed-dim text-on-tertiary-fixed rounded-lg font-label-md text-label-md transition-colors shadow-sm w-full md:w-auto">
-            <span className="material-symbols-outlined text-[18px]">add</span>
+        <div className="flex flex-wrap gap-3">
+          <button 
+            onClick={() => handleOpenModal()}
+            className="flex items-center justify-center gap-2 bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md px-6 py-2.5 rounded-lg transition-colors shadow-sm hover:bg-tertiary-fixed-dim"
+          >
+            <span className="material-symbols-outlined text-[18px]">person_add</span>
             Add Lecturer
           </button>
         </div>
       </div>
-      {/* Content Area - Table */}
-      <div className="bg-surface-container-lowest border border-surface-container-highest rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+
+      {/* Toolbar */}
+      <div className="flex w-full flex-col gap-4 rounded-xl bg-white p-4 shadow-sm lg:flex-row lg:flex-wrap lg:items-end border border-surface-container-highest">
+        {/* Filters */}
+        <SelectField
+          label="Department"
+          wrapperClassName="lg:w-[220px]"
+          value={departmentFilter}
+          onChange={(e) => setDepartmentFilter(e.target.value)}
+        >
+          <option value="All Departments">All Departments</option>
+          {uniqueDepartments.map(d => <option key={d} value={d}>{d}</option>)}
+        </SelectField>
+        <SelectField
+          label="Status"
+          wrapperClassName="lg:w-[220px]"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="All">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </SelectField>
+        {/* Table Search */}
+        <div className="w-full lg:ml-auto lg:max-w-[320px] relative">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+          <input 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-11 pl-10 pr-4 bg-surface border border-outline-variant rounded-lg text-body-md font-body-md focus:outline-none focus:border-secondary transition-colors" 
+            placeholder="Search by name, ID, email..." 
+            type="text" 
+          />
+        </div>
+      </div>
+
+      {/* Table Wrapper */}
+      <div className="w-full overflow-x-auto rounded-xl bg-white shadow-sm border border-surface-container-highest">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-surface-bright border-b border-surface-container-highest">
-                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0">Name</th>
-                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0">ID</th>
-                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0">Department</th>
-                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0 hidden md:table-cell">Assigned Courses</th>
-                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0">Status</th>
-                <th className="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0 text-right">Actions</th>
+              <tr className="bg-surface border-b border-surface-container-highest">
+                <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold">Lecturer Name</th>
+                <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold">Lecturer ID</th>
+                <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold">Department</th>
+                <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold">Courses</th>
+                <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold">Joined Date</th>
+                <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold">Status</th>
+                <th className="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-surface-container-highest">
-              {lecturers.map(lecturer => (
-              <tr key={lecturer.id} className="hover:bg-surface-bright/50 transition-colors group">
-                <td className="py-4 px-6">
-                  <div className="flex items-center gap-3">
-                    {lecturer.avatar ? (
-                      <img className="w-10 h-10 rounded-full object-cover" src={lecturer.avatar} />
-                    ) : (
-                      <div className={`w-10 h-10 rounded-full ${lecturer.bgClass} flex items-center justify-center font-headline-md text-headline-md`}>{lecturer.initials}</div>
-                    )}
-                    <div>
-                      <div className="font-label-md text-label-md text-primary group-hover:text-secondary-container transition-colors">{lecturer.name}</div>
-                      <div className="font-body-sm text-body-sm text-on-surface-variant">{lecturer.email}</div>
+            <tbody className="divide-y divide-surface-container-highest bg-surface-container-lowest">
+              {filteredLecturers.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="p-12 text-center text-on-surface-variant font-label-md">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="material-symbols-outlined text-[48px] text-surface-container-highest">person_off</span>
+                      <p>No lecturers found matching your criteria.</p>
                     </div>
-                  </div>
-                </td>
-                <td className="py-4 px-6 font-body-sm text-body-sm text-on-surface-variant">{lecturer.lecturerId}</td>
-                <td className="py-4 px-6 font-body-sm text-body-sm text-on-surface">{lecturer.department}</td>
-                <td className="py-4 px-6 hidden md:table-cell">
-                  <div className="flex flex-wrap gap-1">
-                    {lecturer.courses.map((c, i) => (
-                      <span key={i} className={c.startsWith('+') ? "inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm" : "inline-flex items-center px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-container font-label-sm text-label-sm"}>{c}</span>
-                    ))}
-                  </div>
-                </td>
-                <td className="py-4 px-6">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm ${lecturer.status === 'Active' ? 'bg-surface-tint/10 text-surface-tint' : 'bg-error-container/50 text-on-error-container'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${lecturer.status === 'Active' ? 'bg-surface-tint' : 'bg-error'}`} /> {lecturer.status}
-                  </span>
-                </td>
-                <td className="py-4 px-6 text-right">
-                  <button className="text-on-surface-variant hover:text-primary transition-colors p-1">
-                    <span className="material-symbols-outlined text-[20px]">more_vert</span>
-                  </button>
-                </td>
-              </tr>
-              ))}
+                  </td>
+                </tr>
+              ) : (
+                filteredLecturers.map(lecturer => (
+                  <tr key={lecturer.id} className="hover:bg-surface-container-low/50 transition-colors group">
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center font-label-md font-bold shrink-0">
+                          {getInitials(lecturer.lecturer_name)}
+                        </div>
+                        <div>
+                          <p className="font-body-md text-body-md font-medium text-primary">{lecturer.lecturer_name}</p>
+                          <p className="font-label-sm text-label-sm text-on-surface-variant">{lecturer.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 font-body-sm text-body-sm text-on-surface-variant">{lecturer.lecturer_id}</td>
+                    <td className="py-4 px-4 font-body-sm text-body-sm text-on-surface-variant">{lecturer.department}</td>
+                    <td className="py-4 px-4">
+                      <div className="flex flex-wrap gap-1">
+                        {lecturer.assigned_courses.split(',').filter(Boolean).map((course, idx) => (
+                          <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-container font-label-sm text-label-sm whitespace-nowrap">
+                            {course.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 font-body-sm text-body-sm text-on-surface-variant">{lecturer.created_at}</td>
+                    <td className="py-4 px-4">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full font-label-sm text-label-sm ${getStatusClass(lecturer.status)}`}>
+                        {lecturer.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => handleOpenModal(lecturer)} className="text-on-surface-variant hover:text-secondary-container transition-colors p-1" title="Edit">
+                          <span className="material-symbols-outlined text-[20px]">edit</span>
+                        </button>
+                        <button onClick={() => handleDelete(lecturer.id)} className="text-on-surface-variant hover:text-error transition-colors p-1" title="Delete">
+                          <span className="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-        {/* Pagination / Footer */}
-        <div className="px-6 py-4 border-t border-surface-container-highest flex items-center justify-between bg-surface-container-lowest">
-          <span className="font-body-sm text-body-sm text-on-surface-variant">Showing 1-3 of 42 lecturers</span>
-          <div className="flex items-center gap-2">
-            <button className="p-1 rounded text-outline hover:text-primary hover:bg-surface-container-low transition-colors disabled:opacity-50">
-              <span className="material-symbols-outlined text-[20px]">chevron_left</span>
-            </button>
-            <button className="w-8 h-8 rounded bg-primary-container text-white font-label-md text-label-md flex items-center justify-center">1</button>
-            <button className="w-8 h-8 rounded text-on-surface-variant hover:bg-surface-container-low font-label-md text-label-md flex items-center justify-center transition-colors">2</button>
-            <button className="w-8 h-8 rounded text-on-surface-variant hover:bg-surface-container-low font-label-md text-label-md flex items-center justify-center transition-colors">3</button>
-            <span className="text-on-surface-variant font-label-md text-label-md">...</span>
-            <button className="p-1 rounded text-outline hover:text-primary hover:bg-surface-container-low transition-colors">
-              <span className="material-symbols-outlined text-[20px]">chevron_right</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    </>
+      {/* Form Modal */}
+      <AnimatedModal isOpen={isModalOpen} onClose={handleCloseModal} className="max-w-lg">
+            <div className="p-6 border-b border-surface-container-highest flex justify-between items-center bg-surface-bright">
+              <h3 className="font-headline-md text-primary">{editingLecturer ? 'Edit Lecturer' : 'Add New Lecturer'}</h3>
+              <button onClick={handleCloseModal} className="text-on-surface-variant hover:text-error transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <form onSubmit={handleSave} className="p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+              <div>
+                <label className="font-label-sm text-on-surface-variant block mb-1">Lecturer Name</label>
+                <input required type="text" name="lecturer_name" value={formData.lecturer_name} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" placeholder="e.g. Dr. Jane Smith" />
+              </div>
+              
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="font-label-sm text-on-surface-variant block mb-1">Lecturer ID</label>
+                  <input required type="text" name="lecturer_id" value={formData.lecturer_id} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" placeholder="e.g. LEC-2023-001" />
+                </div>
+                <div className="flex-1">
+                  <label className="font-label-sm text-on-surface-variant block mb-1">Join Date</label>
+                  <input required type="date" name="created_at" value={formData.created_at} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-label-sm text-on-surface-variant block mb-1">Email Address</label>
+                <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" placeholder="e.g. jane.smith@edumanage.edu" />
+              </div>
+
+              <div>
+                <label className="font-label-sm text-on-surface-variant block mb-1">Department</label>
+                <input required type="text" name="department" value={formData.department} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" placeholder="e.g. Computer Science" />
+              </div>
+              
+              <div>
+                <label className="font-label-sm text-on-surface-variant block mb-1">Assigned Courses (Comma separated)</label>
+                <input type="text" name="assigned_courses" value={formData.assigned_courses} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" placeholder="e.g. CS101, CS202" />
+              </div>
+
+              <SelectField
+                label="Status"
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </SelectField>
+
+              <div className="mt-4 flex justify-end gap-3 pt-4 border-t border-surface-container-highest">
+                <button type="button" onClick={handleCloseModal} className="px-5 py-2 rounded-lg font-label-md text-on-surface-variant hover:bg-surface-container-highest transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" className="px-5 py-2 rounded-lg bg-primary text-white font-label-md hover:bg-primary-container transition-colors flex items-center gap-2">
+                  {editingLecturer ? 'Save Changes' : 'Create Lecturer'}
+                </button>
+              </div>
+            </form>
+      </AnimatedModal>
+    </PageContainer>
   );
 };
 

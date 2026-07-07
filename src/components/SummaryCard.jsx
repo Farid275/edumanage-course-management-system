@@ -1,8 +1,16 @@
 import React from 'react';
+import { motion } from 'motion/react';
 
-const SummaryCard = ({ item }) => {
+const SummaryCard = ({ item, index = 0 }) => {
   return (
-    <div className="bg-surface-container-lowest p-6 rounded-xl border border-surface-container-highest flex flex-col gap-3 relative overflow-hidden group hover:border-outline-variant transition-colors">
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="bg-surface-container-lowest p-6 rounded-xl border border-surface-container-highest flex flex-col gap-3 relative overflow-hidden group hover:border-outline-variant transition-colors w-full h-full"
+    >
       <div className={`absolute top-0 right-0 w-24 h-24 ${item.bgClass} rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110`} />
       <div className="flex items-center justify-between">
         <span className="font-label-md text-label-md text-on-surface-variant">{item.label}</span>
@@ -13,7 +21,7 @@ const SummaryCard = ({ item }) => {
         <span className="material-symbols-outlined text-[16px]">{item.trendIcon || 'trending_up'}</span>
         <span>{item.trend}</span>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

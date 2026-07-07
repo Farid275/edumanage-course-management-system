@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const TopNavbar = () => {
+const TopNavbar = ({ className }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   
@@ -14,7 +14,7 @@ const TopNavbar = () => {
   };
 
   return (
-    <header className="flex justify-between items-center h-16 px-container-padding w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-surface-container-highest dark:border-outline-variant">
+    <header className={`flex justify-between items-center h-16 px-container-padding w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-surface-container-highest dark:border-outline-variant ${className || ''}`}>
       {/* Mobile Brand (Hidden on Desktop) */}
       <div className="lg:hidden flex items-center gap-2">
         <button className="p-2 text-on-surface hover:bg-surface-variant rounded-full transition-colors mr-2">
