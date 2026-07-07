@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-surface" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EduManage - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#ffe088",
+                      "error-container": "#ffdad6",
+                      "on-secondary-fixed-variant": "#15458b",
+                      "on-primary-fixed": "#00174a",
+                      "on-tertiary-fixed": "#241a00",
+                      "outline": "#757682",
+                      "on-primary-fixed-variant": "#2a4386",
+                      "surface-container-lowest": "#ffffff",
+                      "primary": "#00113a",
+                      "on-error": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed-dim": "#e9c349",
+                      "inverse-surface": "#2e3132",
+                      "surface-bright": "#f8f9fa",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-surface-variant": "#444650",
+                      "surface": "#f8f9fa",
+                      "surface-container-high": "#e7e8e9",
+                      "on-secondary": "#ffffff",
+                      "inverse-on-surface": "#f0f1f2",
+                      "on-secondary-fixed": "#001a41",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "surface-container-low": "#f3f4f5",
+                      "surface-tint": "#435b9f",
+                      "primary-fixed-dim": "#b3c5ff",
+                      "on-background": "#191c1d",
+                      "primary-container": "#002366",
+                      "on-secondary-container": "#0f4187",
+                      "surface-dim": "#d9dadb",
+                      "secondary-container": "#8ab0fe",
+                      "tertiary": "#735c00",
+                      "on-surface": "#191c1d",
+                      "on-tertiary-container": "#4f3e00",
+                      "inverse-primary": "#b3c5ff",
+                      "secondary-fixed": "#d8e2ff",
+                      "error": "#ba1a1a",
+                      "tertiary-container": "#cca830",
+                      "on-primary-container": "#758dd5",
+                      "surface-container": "#edeeef",
+                      "primary-fixed": "#dbe1ff",
+                      "secondary": "#345da4",
+                      "background": "#f8f9fa",
+                      "outline-variant": "#c5c6d2",
+                      "on-tertiary": "#ffffff",
+                      "secondary-fixed-dim": "#adc6ff",
+                      "surface-variant": "#e1e3e4",
+                      "on-primary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "8px",
+                      "container-padding": "32px",
+                      "card-gap": "24px",
+                      "gutter": "24px",
+                      "section-margin": "48px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Inter"],
+                      "headline-xl": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "label-md": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+              }
+            },
+          }
+        }
+    </script>
+</head>
+<body class="h-full bg-surface text-on-surface flex font-body-md">
+<!-- Split Layout Container -->
+<div class="flex w-full h-full">
+<!-- Left Side: Form Area -->
+<div class="flex-1 flex flex-col justify-center px-container-padding sm:px-12 md:px-24 lg:px-32 xl:px-48 bg-surface-container-lowest border-r border-surface-container-highest z-10 relative shadow-[0_0_30px_rgba(0,0,0,0.05)]">
+<div class="max-w-md w-full mx-auto">
+<!-- Brand Logo -->
+<div class="mb-12 flex items-center gap-base">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+<span class="font-headline-lg text-headline-lg text-primary">EduManage</span>
+</div>
+<!-- Welcome Text -->
+<div class="mb-8">
+<h1 class="font-headline-xl text-headline-xl text-primary mb-2">Welcome back</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Sign in to your academic portal.</p>
+</div>
+<!-- Form -->
+<form class="space-y-6">
+<!-- Role Selector (Bento style toggle) -->
+<div class="grid grid-cols-3 gap-2 p-1 bg-surface-container-low rounded-lg border border-outline-variant/30 mb-6">
+<label class="cursor-pointer relative">
+<input checked="" class="peer sr-only" name="role" type="radio" value="student"/>
+<div class="text-center py-2 rounded font-label-md text-label-md text-on-surface-variant peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition-all">
+                                Student
+                            </div>
+</label>
+<label class="cursor-pointer relative">
+<input class="peer sr-only" name="role" type="radio" value="lecturer"/>
+<div class="text-center py-2 rounded font-label-md text-label-md text-on-surface-variant peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition-all">
+                                Lecturer
+                            </div>
+</label>
+<label class="cursor-pointer relative">
+<input class="peer sr-only" name="role" type="radio" value="admin"/>
+<div class="text-center py-2 rounded font-label-md text-label-md text-on-surface-variant peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition-all">
+                                Admin
+                            </div>
+</label>
+</div>
+<!-- Email Input -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1" for="email">Institutional Email</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">mail</span>
+</div>
+<input autocomplete="email" class="appearance-none block w-full pl-10 pr-3 py-3 border border-outline-variant/60 rounded-lg bg-white placeholder-on-surface-variant/50 font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary-container focus:border-secondary-container transition-shadow" id="email" name="email" placeholder="name@university.edu" required="" type="email"/>
+</div>
+</div>
+<!-- Password Input -->
+<div>
+<div class="flex items-center justify-between mb-1">
+<label class="block font-label-md text-label-md text-on-surface" for="password">Password</label>
+<a class="font-label-md text-label-md text-secondary hover:text-primary transition-colors" href="#">Forgot Password?</a>
+</div>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">lock</span>
+</div>
+<input autocomplete="current-password" class="appearance-none block w-full pl-10 pr-10 py-3 border border-outline-variant/60 rounded-lg bg-white placeholder-on-surface-variant/50 font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary-container focus:border-secondary-container transition-shadow" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-outline hover:text-on-surface focus:outline-none" type="button">
+<span class="material-symbols-outlined">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Submit Button -->
+<div class="pt-2">
+<button class="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm font-label-md text-label-md text-on-tertiary-fixed bg-tertiary-fixed hover:bg-tertiary-fixed-dim focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tertiary-fixed transition-colors duration-200" type="submit">
+                            Sign In
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</form>
+<!-- Demo info footer -->
+<div class="mt-8 pt-6 border-t border-surface-container-highest">
+<p class="font-label-sm text-label-sm text-on-surface-variant/70 text-center">
+                        Demo Accounts: student@demo.com | admin@demo.com<br/>Password: demo123
+                    </p>
+</div>
+</div>
+</div>
+<!-- Right Side: Visual Context -->
+<div class="hidden lg:flex flex-1 relative bg-primary overflow-hidden items-center justify-center">
+<!-- Background Image with Overlay -->
+<div class="absolute inset-0 z-0 opacity-40 mix-blend-luminosity">
+<div class="bg-cover bg-center w-full h-full" data-alt="A sophisticated, modern university campus building at dusk, featuring sleek glass architecture and structured geometric lines. The lighting is cool, academic, and aspirational, utilizing deep navy blue shadows and soft, warm ambient light spilling from the windows, representing a high-stakes educational environment in a corporate modern style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAJgtjg6stp-lfeja-MDz8qgwqlBfW21jdduQ38HcZGSY64bHwaKqkUB9TtbZuwIeys1HJ4nlffQ_A0yVyAATHGt5haxpUe7SkpU3zojqACF9FyBDSu-5GeGnD3t9zdnsPn2OfhBwn6iNWmD9n5icfkMAA9wvdNry0lF1wsSUpG9K8My3FVXyzw_t2qv-AUIHcY2YK37DDrxpcEkgdUYfpZhaBMnmzKd5DQikvG-z6IEAWkdaCziytrDZgP2S37bFUm4wOBPV8J6zo')"></div>
+</div>
+<!-- Gradient Overlay for Naval blue tint -->
+<div class="absolute inset-0 z-0 bg-gradient-to-br from-primary/90 to-primary-container/90"></div>
+<!-- Abstract Geometric Elements -->
+<div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+<div class="absolute top-1/4 right-[-10%] w-[500px] h-[500px] rounded-full border-[40px] border-secondary-container/10 blur-3xl"></div>
+<div class="absolute bottom-1/4 left-[-10%] w-[400px] h-[400px] rounded-full border-[20px] border-tertiary-fixed/10 blur-2xl"></div>
+</div>
+<!-- Dashboard Preview UI Element (Glassmorphism) -->
+<div class="z-10 w-full max-w-2xl px-12 transform translate-x-12">
+<div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-8 shadow-2xl">
+<div class="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">bar_chart</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-white">System Overview</h3>
+<p class="font-body-sm text-body-sm text-primary-fixed-dim">Academic Performance Metrics</p>
+</div>
+</div>
+<div class="px-3 py-1 rounded-full bg-tertiary-fixed/20 border border-tertiary-fixed/30 text-tertiary-fixed font-label-sm text-label-sm">
+                            Live Data
+                        </div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-primary-container/40 border border-white/10 rounded-lg p-4">
+<span class="material-symbols-outlined text-secondary-fixed mb-2">group</span>
+<div class="font-headline-lg text-headline-lg text-white mb-1">12,450</div>
+<div class="font-label-sm text-label-sm text-primary-fixed-dim">Active Students</div>
+</div>
+<div class="bg-primary-container/40 border border-white/10 rounded-lg p-4">
+<span class="material-symbols-outlined text-tertiary-fixed mb-2">assignment</span>
+<div class="font-headline-lg text-headline-lg text-white mb-1">98.2%</div>
+<div class="font-label-sm text-label-sm text-primary-fixed-dim">Submission Rate</div>
+</div>
+</div>
+<!-- Fake progress bars -->
+<div class="space-y-4">
+<div>
+<div class="flex justify-between font-label-sm text-label-sm text-white mb-2">
+<span>Server Capacity</span>
+<span>45%</span>
+</div>
+<div class="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+<div class="h-full bg-secondary-fixed w-[45%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-sm text-label-sm text-white mb-2">
+<span>Database Sync</span>
+<span>99%</span>
+</div>
+<div class="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-fixed w-[99%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating decorative card -->
+<div class="absolute -right-8 -bottom-12 bg-white rounded-lg p-4 shadow-xl border border-surface-container-highest animate-bounce" style="animation-duration: 3s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate;">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">check_circle</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-on-surface">System Status</div>
+<div class="font-label-sm text-label-sm text-secondary">All operational</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EduManage - Lecturers</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#ffe088",
+                      "error-container": "#ffdad6",
+                      "on-secondary-fixed-variant": "#15458b",
+                      "on-primary-fixed": "#00174a",
+                      "on-tertiary-fixed": "#241a00",
+                      "outline": "#757682",
+                      "on-primary-fixed-variant": "#2a4386",
+                      "surface-container-lowest": "#ffffff",
+                      "primary": "#00113a",
+                      "on-error": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed-dim": "#e9c349",
+                      "inverse-surface": "#2e3132",
+                      "surface-bright": "#f8f9fa",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-surface-variant": "#444650",
+                      "surface": "#f8f9fa",
+                      "surface-container-high": "#e7e8e9",
+                      "on-secondary": "#ffffff",
+                      "inverse-on-surface": "#f0f1f2",
+                      "on-secondary-fixed": "#001a41",
+                      "on-tertiary-fixed-variant": "#574500",
+                      "surface-container-low": "#f3f4f5",
+                      "surface-tint": "#435b9f",
+                      "primary-fixed-dim": "#b3c5ff",
+                      "on-background": "#191c1d",
+                      "primary-container": "#002366",
+                      "on-secondary-container": "#0f4187",
+                      "surface-dim": "#d9dadb",
+                      "secondary-container": "#8ab0fe",
+                      "tertiary": "#735c00",
+                      "on-surface": "#191c1d",
+                      "on-tertiary-container": "#4f3e00",
+                      "inverse-primary": "#b3c5ff",
+                      "secondary-fixed": "#d8e2ff",
+                      "error": "#ba1a1a",
+                      "tertiary-container": "#cca830",
+                      "on-primary-container": "#758dd5",
+                      "surface-container": "#edeeef",
+                      "primary-fixed": "#dbe1ff",
+                      "secondary": "#345da4",
+                      "background": "#f8f9fa",
+                      "outline-variant": "#c5c6d2",
+                      "on-tertiary": "#ffffff",
+                      "secondary-fixed-dim": "#adc6ff",
+                      "surface-variant": "#e1e3e4",
+                      "on-primary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "8px",
+                      "container-padding": "32px",
+                      "card-gap": "24px",
+                      "gutter": "24px",
+                      "section-margin": "48px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Inter"],
+                      "headline-xl": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "label-md": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+              }
+            },
+          }
+        }
+    </script>
+<style>
+        body { background-color: #f8f9fa; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0; }
+        .filled-icon { font-variation-settings: 'FILL' 1; }
+    </style>
+</head>
+<body class="flex min-h-screen bg-background font-body-md text-body-md text-on-surface">
+<!-- SideNavBar -->
+<nav class="hidden lg:flex flex-col h-full border-r border-outline-variant/20 fixed left-0 top-0 w-[280px] bg-primary dark:bg-primary-container z-50">
+<div class="p-container-padding pb-8">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 object-contain rounded-lg" data-alt="A highly detailed 3D render of an academic shield logo for a university named EduManage. The logo is minimalist, modern, and uses a deep naval blue and striking gold color palette. The background is transparent. High quality, clear, professional SaaS branding style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGP4nISGPh29mTe15CkBzZSMuLyJM31bdS9FMeYoUYxOvGetdvKrj_gj1m2n7ZgIcnjFaxrfn5UeLhoaKgLnHKtAtOKtz8h3ONfwq23ZWe4vDlrkdx7zVzV5ehLRDBeNOJFnKYRA84OrBIjM8hoR0nyTU9zOEXIGhPH33ZqgU5ZwZ84Cth8-MpR2O34ucKDoPJ5x0b0ewZeVKsf319XR38PXx-MGjktQR0QrdQ_z_1NC-xPlDxMrGVHdjdRPHnUsTq30fa27vJrds"/>
+<div>
+<h1 class="font-headline-lg text-headline-lg font-bold text-white tracking-tight">EduManage</h1>
+<p class="font-label-sm text-label-sm text-tertiary-fixed/80">Academic Portal</p>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto flex flex-col gap-1 px-4 pb-container-padding">
+<a class="flex items-center gap-base text-on-primary/70 dark:text-on-primary-container/70 px-4 py-3 rounded-lg hover:bg-on-primary-fixed-variant/5 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-base text-on-primary/70 dark:text-on-primary-container/70 px-4 py-3 rounded-lg hover:bg-on-primary-fixed-variant/5 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">school</span>
+<span class="font-label-md text-label-md">Courses</span>
+</a>
+<a class="flex items-center gap-base text-on-primary/70 dark:text-on-primary-container/70 px-4 py-3 rounded-lg hover:bg-on-primary-fixed-variant/5 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="font-label-md text-label-md">Students</span>
+</a>
+<a class="flex items-center gap-base text-secondary-fixed dark:text-secondary-fixed-dim border-l-4 border-secondary-container bg-on-primary-fixed-variant/10 px-4 py-3 rounded-r-lg translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined filled-icon text-[20px]">record_voice_over</span>
+<span class="font-label-md text-label-md font-bold">Lecturers</span>
+</a>
+<a class="flex items-center gap-base text-on-primary/70 dark:text-on-primary-container/70 px-4 py-3 rounded-lg hover:bg-on-primary-fixed-variant/5 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">assignment</span>
+<span class="font-label-md text-label-md">Assignments</span>
+</a>
+<a class="flex items-center gap-base text-on-primary/70 dark:text-on-primary-container/70 px-4 py-3 rounded-lg hover:bg-on-primary-fixed-variant/5 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+<span class="font-label-md text-label-md">Attendance</span>
+</a>
+<a class="flex items-center gap-base text-on-primary/70 dark:text-on-primary-container/70 px-4 py-3 rounded-lg hover:bg-on-primary-fixed-variant/5 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">grade</span>
+<span class="font-label-md text-label-md">Grades</span>
+</a>
+<a class="flex items-center gap-base text-on-primary/70 dark:text-on-primary-container/70 px-4 py-3 rounded-lg hover:bg-on-primary-fixed-variant/5 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">folder_open</span>
+<span class="font-label-md text-label-md">Materials</span>
+</a>
+<a class="flex items-center gap-base text-on-primary/70 dark:text-on-primary-container/70 px-4 py-3 rounded-lg hover:bg-on-primary-fixed-variant/5 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">bar_chart</span>
+<span class="font-label-md text-label-md">Reports</span>
+</a>
+<div class="mt-auto pt-8">
+<a class="flex items-center gap-base text-on-primary/70 dark:text-on-primary-container/70 px-4 py-3 rounded-lg hover:bg-on-primary-fixed-variant/5 hover:text-white transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 lg:ml-[280px] flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-16 px-container-padding w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-surface-container-highest dark:border-outline-variant">
+<div class="flex items-center gap-4 lg:hidden">
+<button class="text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-primary-fixed">EduManage</span>
+</div>
+<!-- Search Bar (on_left in TopNavBar config) -->
+<div class="hidden lg:flex items-center bg-surface-container-low border border-surface-container-highest rounded-full px-4 py-2 w-96 focus-within:border-secondary-container focus-within:ring-2 focus-within:ring-secondary-container/20 transition-all">
+<span class="material-symbols-outlined text-outline text-[20px] mr-2">search</span>
+<input class="bg-transparent border-none outline-none font-body-sm text-body-sm text-on-surface w-full focus:ring-0 placeholder:text-outline p-0" placeholder="Search lecturers, departments..." type="text"/>
+</div>
+<div class="flex items-center gap-6 ml-auto">
+<button class="text-on-surface-variant hover:text-primary transition-all relative group">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border border-surface group-hover:scale-95 duration-150"></span>
+</button>
+<div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+<img class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="A professional headshot of a middle-aged academic administrator wearing glasses and a navy blue suit. The background is a brightly lit, modern university office with blurred books on shelves. Clean, bright, and professional lighting suitable for an academic software platform avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuADC_zt-eSmXrfHFdMvNo3iDTW1IDeZHiuXN5diu4deqX2CdkMzdfSzpn36xoF3P_rgeFWRAMT8Hi3sezOmahP85YgYe_siujhcNGD4eLR5G46XzVuevywTmUa-l-zkJY8MnGh0ysmjdWWiqb5fefowEs0leU2lLN-HMtlzlcW6nG7-Rsxw6cbH1oGF6ZztAXtUUhGNOP-Yie7kqqCWrNg4fSdETKvZPIOsd3F2Thkk3NidThCZjrzQnlcSJ_pOLVPDFKTxuzUqreM"/>
+<span class="font-label-md text-label-md text-on-surface-variant hidden md:block">Profile</span>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-container-padding flex-1">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<div>
+<h2 class="font-headline-xl text-headline-xl text-primary">Lecturers</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Manage faculty members, assignments, and departmental roles.</p>
+</div>
+<div class="flex items-center gap-3 w-full md:w-auto">
+<button class="flex items-center justify-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors w-full md:w-auto">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                        Filters
+                    </button>
+<button class="flex items-center justify-center gap-2 px-4 py-2 bg-tertiary-fixed hover:bg-tertiary-fixed-dim text-on-tertiary-fixed rounded-lg font-label-md text-label-md transition-colors shadow-sm w-full md:w-auto">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        Add Lecturer
+                    </button>
+</div>
+</div>
+<!-- Content Area - Table -->
+<div class="bg-surface-container-lowest border border-surface-container-highest rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-bright border-b border-surface-container-highest">
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0">Name</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0">ID</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0">Department</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0 hidden md:table-cell">Assigned Courses</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0">Status</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-semibold sticky top-0 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest">
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center font-headline-md text-headline-md">FA</div>
+<div>
+<div class="font-label-md text-label-md text-primary group-hover:text-secondary-container transition-colors">Dr. Farid Akbar</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">farid.akbar@edumanage.edu</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 font-body-sm text-body-sm text-on-surface-variant">LEC-2023-014</td>
+<td class="py-4 px-6 font-body-sm text-body-sm text-on-surface">Computer Science</td>
+<td class="py-4 px-6 hidden md:table-cell">
+<div class="flex flex-wrap gap-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-container font-label-sm text-label-sm">CS101</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-container font-label-sm text-label-sm">CS305</span>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-tint/10 text-surface-tint font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-tint"></span> Active
+                                    </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A professional portrait of Dr. Anisa Rahma, a female academic in her late 30s. She is wearing a smart blazer and hijab, standing in front of a modern whiteboard with abstract diagrams. Soft, diffused lighting, shallow depth of field, high-end corporate academic aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkL-I7DesEhJUo8-dlVtiOAk4n2-FiuH4DYv412HuN7PNt_GPk23AQXo91g0yrub-g8CL4hYLiA0_KXNPTOL270x9XxbRcZmjX7wmFB5-Itr3COWzmfbvJK0t51uQQsenVkdACwf171mqiaQwh1tlE1zB1vaQqaStBsBBdegZFaRd7W6vYfjbYJOEoiVAo1ESEPX1f8ce6fxszGj0-untFpeY9fRUtHNptmcDOJSFH5Mu0YHAeRvO21WwEgV8dTK1aX3NB3YnsQzQ"/>
+<div>
+<div class="font-label-md text-label-md text-primary group-hover:text-secondary-container transition-colors">Dr. Anisa Rahma</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">anisa.rahma@edumanage.edu</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 font-body-sm text-body-sm text-on-surface-variant">LEC-2021-089</td>
+<td class="py-4 px-6 font-body-sm text-body-sm text-on-surface">Mathematics</td>
+<td class="py-4 px-6 hidden md:table-cell">
+<div class="flex flex-wrap gap-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-container font-label-sm text-label-sm">MATH201</span>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-tint/10 text-surface-tint font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-tint"></span> Active
+                                    </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center font-headline-md text-headline-md">BP</div>
+<div>
+<div class="font-label-md text-label-md text-primary group-hover:text-secondary-container transition-colors">Prof. Bima Prasetyo</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">bima.p@edumanage.edu</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 font-body-sm text-body-sm text-on-surface-variant">LEC-2015-002</td>
+<td class="py-4 px-6 font-body-sm text-body-sm text-on-surface">Physics</td>
+<td class="py-4 px-6 hidden md:table-cell">
+<div class="flex flex-wrap gap-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-container font-label-sm text-label-sm">PHY401</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-container font-label-sm text-label-sm">PHY800</span>
+<span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm">+1</span>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container/50 text-on-error-container font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> On Leave
+                                    </span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination / Footer -->
+<div class="px-6 py-4 border-t border-surface-container-highest flex items-center justify-between bg-surface-container-lowest">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Showing 1-3 of 42 lecturers</span>
+<div class="flex items-center gap-2">
+<button class="p-1 rounded text-outline hover:text-primary hover:bg-surface-container-low transition-colors disabled:opacity-50">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded bg-primary-container text-white font-label-md text-label-md flex items-center justify-center">1</button>
+<button class="w-8 h-8 rounded text-on-surface-variant hover:bg-surface-container-low font-label-md text-label-md flex items-center justify-center transition-colors">2</button>
+<button class="w-8 h-8 rounded text-on-surface-variant hover:bg-surface-container-low font-label-md text-label-md flex items-center justify-center transition-colors">3</button>
+<span class="text-on-surface-variant font-label-md text-label-md">...</span>
+<button class="p-1 rounded text-outline hover:text-primary hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

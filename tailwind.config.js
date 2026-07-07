@@ -1,0 +1,100 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+              "tertiary-fixed": "#ffe088",
+              "error-container": "#ffdad6",
+              "on-secondary-fixed-variant": "#15458b",
+              "on-primary-fixed": "#00174a",
+              "on-tertiary-fixed": "#241a00",
+              "outline": "#757682",
+              "on-primary-fixed-variant": "#2a4386",
+              "surface-container-lowest": "#ffffff",
+              "primary": "#00113a",
+              "on-error": "#ffffff",
+              "on-error-container": "#93000a",
+              "tertiary-fixed-dim": "#e9c349",
+              "inverse-surface": "#2e3132",
+              "surface-bright": "#f8f9fa",
+              "surface-container-highest": "#e1e3e4",
+              "on-surface-variant": "#444650",
+              "surface": "#f8f9fa",
+              "surface-container-high": "#e7e8e9",
+              "on-secondary": "#ffffff",
+              "inverse-on-surface": "#f0f1f2",
+              "on-secondary-fixed": "#001a41",
+              "on-tertiary-fixed-variant": "#574500",
+              "surface-container-low": "#f3f4f5",
+              "surface-tint": "#435b9f",
+              "primary-fixed-dim": "#b3c5ff",
+              "on-background": "#191c1d",
+              "primary-container": "#002366",
+              "on-secondary-container": "#0f4187",
+              "surface-dim": "#d9dadb",
+              "secondary-container": "#8ab0fe",
+              "tertiary": "#735c00",
+              "on-surface": "#191c1d",
+              "on-tertiary-container": "#4f3e00",
+              "inverse-primary": "#b3c5ff",
+              "secondary-fixed": "#d8e2ff",
+              "error": "#ba1a1a",
+              "tertiary-container": "#cca830",
+              "on-primary-container": "#758dd5",
+              "surface-container": "#edeeef",
+              "primary-fixed": "#dbe1ff",
+              "secondary": "#345da4",
+              "background": "#f8f9fa",
+              "outline-variant": "#c5c6d2",
+              "on-tertiary": "#ffffff",
+              "secondary-fixed-dim": "#adc6ff",
+              "surface-variant": "#e1e3e4",
+              "on-primary": "#ffffff"
+      },
+      "borderRadius": {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "full": "9999px"
+      },
+      "spacing": {
+              "base": "8px",
+              "container-padding": "32px",
+              "card-gap": "24px",
+              "gutter": "24px",
+              "section-margin": "48px"
+      },
+      "fontFamily": {
+              "headline-md": ["Inter"],
+              "headline-xl": ["Inter"],
+              "headline-lg-mobile": ["Inter"],
+              "label-sm": ["Inter"],
+              "label-md": ["Inter"],
+              "body-md": ["Inter"],
+              "headline-lg": ["Inter"],
+              "body-lg": ["Inter"],
+              "body-sm": ["Inter"]
+      },
+      "fontSize": {
+              "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+              "headline-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+              "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+              "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+              "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+              "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+              "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+              "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+              "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+      }
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/container-queries')
+  ],
+}
