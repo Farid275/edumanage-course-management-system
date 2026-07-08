@@ -29,7 +29,7 @@ const AppRoutes = () => {
         {/* Admin Routes */}
         <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
         <Route path="/courses" element={<ProtectedRoute allowedRoles={['admin', 'lecturer', 'student']}><CoursesManagement /></ProtectedRoute>} />
-        <Route path="/students" element={<ProtectedRoute allowedRoles={['admin', 'lecturer']}><StudentManagement /></ProtectedRoute>} />
+        <Route path="/students" element={<ProtectedRoute allowedRoles={['admin', 'lecturer', 'student']}><StudentManagement /></ProtectedRoute>} />
         <Route path="/lecturers" element={<ProtectedRoute allowedRoles={['admin']}><LecturerManagement /></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute allowedRoles={['admin', 'lecturer']}><ReportsManagement /></ProtectedRoute>} />
         

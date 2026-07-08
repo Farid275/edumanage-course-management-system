@@ -1,20 +1,15 @@
-import React, { useState } from 'react';
-import { students as initialStudents } from '../data/dummyData';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../context/AuthContext';
 import PageContainer from '../components/layout/PageContainer';
 import AnimatedModal from '../components/animations/AnimatedModal';
 import SelectField from '../components/ui/SelectField';
 
 const StudentManagement = () => {
-  const [studentsList, setStudentsList] = useState(() => initialStudents.map(s => ({
-    id: s.id,
-    student_name: s.name,
-    student_id: s.studentId,
-    email: s.email,
-    program: s.program,
-    enrolled_courses: s.courses === '-' ? 0 : parseInt(s.courses),
-    status: s.status,
-    created_at: new Date().toISOString().split('T')[0]
-  })));
+  const { user, role } = useAuth();
+  const [studentsList, setStudentsList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -22,16 +17,39 @@ const StudentManagement = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     student_name: '',
     student_id: '',
     email: '',
     program: '',
-    enrolled_courses: 0,
-    status: 'Active',
-    created_at: new Date().toISOString().split('T')[0]
+    enrolled_courses: '',
+    status: 'Active'
   });
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    setIsLoading(true);
+    setErrorMsg('');
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setStudentsList(data || []);
+    } catch (err) {
+      console.error('Error fetching students:', err);
+      setErrorMsg(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getStatusClass = (status) => {
     switch(status) {
@@ -62,9 +80,8 @@ const StudentManagement = () => {
         student_id: `STU-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
         email: '',
         program: '',
-        enrolled_courses: 0,
-        status: 'Active',
-        created_at: new Date().toISOString().split('T')[0]
+        enrolled_courses: '',
+        status: 'Active'
       });
     }
     setIsModalOpen(true);
@@ -79,31 +96,83 @@ const StudentManagement = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'enrolled_courses' ? parseInt(value) || 0 : value
+      [name]: value
     }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editingStudent) {
-      setStudentsList(studentsList.map(s => 
-        s.id === editingStudent.id 
-          ? { ...s, ...formData }
-          : s
-      ));
-    } else {
-      const newStudent = {
-        id: Date.now(),
-        ...formData
+    setIsSaving(true);
+    
+    try {
+      const payload = {
+        student_name: formData.student_name.trim(),
+        student_id: formData.student_id.trim(),
+        email: formData.email.trim(),
+        program: formData.program.trim(),
+        enrolled_courses: Array.isArray(formData.enrolled_courses)
+          ? formData.enrolled_courses
+          : String(formData.enrolled_courses || '')
+              .split(',')
+              .map(item => item.trim())
+              .filter(Boolean),
+        status: formData.status || 'Active',
+        created_by: user.id
       };
-      setStudentsList([newStudent, ...studentsList]);
+
+      if (editingStudent) {
+        const { error } = await supabase
+          .from('students')
+          .update(payload)
+          .eq('id', editingStudent.id);
+          
+        if (error) {
+          console.error('Supabase student update error:', error);
+          alert(error.message);
+          return;
+        }
+      } else {
+        const { data, error } = await supabase
+          .from('students')
+          .insert([payload])
+          .select()
+          .single();
+          
+        if (error) {
+          console.error('Supabase student insert error:', error);
+          alert(error.message);
+          return;
+        }
+      }
+      
+      await fetchStudents();
+      handleCloseModal();
+    } catch (err) {
+      console.error('Supabase student save error:', err);
+      alert(err.message);
+    } finally {
+      setIsSaving(false);
     }
-    handleCloseModal();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this student?")) {
-      setStudentsList(studentsList.filter(s => s.id !== id));
+      try {
+        const { error } = await supabase
+          .from('students')
+          .delete()
+          .eq('id', id);
+          
+        if (error) {
+          console.error('Supabase student delete error:', error);
+          alert(error.message);
+          return;
+        }
+        await fetchStudents();
+      } catch (err) {
+        console.error('Supabase student delete error:', err);
+        alert(err.message);
+      }
     }
   };
 
@@ -131,13 +200,15 @@ const StudentManagement = () => {
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">Manage enrollments, academic records, and student profiles.</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button 
-            onClick={() => handleOpenModal()}
-            className="flex items-center justify-center gap-2 bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md px-6 py-2.5 rounded-lg transition-colors shadow-sm hover:bg-tertiary-fixed-dim"
-          >
-            <span className="material-symbols-outlined text-[18px]">person_add</span>
-            Add Student
-          </button>
+          {role !== 'student' && (
+            <button 
+              onClick={() => handleOpenModal()}
+              className="flex items-center justify-center gap-2 bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md px-6 py-2.5 rounded-lg transition-colors shadow-sm hover:bg-tertiary-fixed-dim"
+            >
+              <span className="material-symbols-outlined text-[18px]">person_add</span>
+              Add Student
+            </button>
+          )}
         </div>
       </div>
 
@@ -192,7 +263,25 @@ const StudentManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container-highest bg-surface-container-lowest">
-              {filteredStudents.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan="7" className="p-12 text-center text-on-surface-variant font-label-md">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="material-symbols-outlined animate-spin text-[32px] text-primary">refresh</span>
+                      <p>Loading students from Supabase...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : errorMsg ? (
+                <tr>
+                  <td colSpan="7" className="p-12 text-center text-error font-label-md">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="material-symbols-outlined text-[48px]">error</span>
+                      <p>{errorMsg}</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredStudents.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="p-12 text-center text-on-surface-variant font-label-md">
                     <div className="flex flex-col items-center gap-2">
@@ -217,8 +306,12 @@ const StudentManagement = () => {
                     </td>
                     <td className="py-4 px-4 font-body-sm text-body-sm text-on-surface-variant">{student.student_id}</td>
                     <td className="py-4 px-4 font-body-sm text-body-sm text-on-surface-variant">{student.program}</td>
-                    <td className="py-4 px-4 font-body-sm text-body-sm text-center font-medium text-primary">{student.enrolled_courses}</td>
-                    <td className="py-4 px-4 font-body-sm text-body-sm text-on-surface-variant">{student.created_at}</td>
+                    <td className="py-4 px-4 font-body-sm text-body-sm text-center font-medium text-primary">
+                      {Array.isArray(student.enrolled_courses) ? student.enrolled_courses.length : 0}
+                    </td>
+                    <td className="py-4 px-4 font-body-sm text-body-sm text-on-surface-variant">
+                      {student.created_at ? new Date(student.created_at).toLocaleDateString() : '-'}
+                    </td>
                     <td className="py-4 px-4">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full font-label-sm text-label-sm ${getStatusClass(student.status)}`}>
                         {student.status}
@@ -226,12 +319,16 @@ const StudentManagement = () => {
                     </td>
                     <td className="py-4 px-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleOpenModal(student)} className="text-on-surface-variant hover:text-secondary-container transition-colors p-1" title="Edit">
-                          <span className="material-symbols-outlined text-[20px]">edit</span>
-                        </button>
-                        <button onClick={() => handleDelete(student.id)} className="text-on-surface-variant hover:text-error transition-colors p-1" title="Delete">
-                          <span className="material-symbols-outlined text-[20px]">delete</span>
-                        </button>
+                        {role !== 'student' && (
+                          <button onClick={() => handleOpenModal(student)} className="text-on-surface-variant hover:text-secondary-container transition-colors p-1" title="Edit">
+                            <span className="material-symbols-outlined text-[20px]">edit</span>
+                          </button>
+                        )}
+                        {role === 'admin' && (
+                          <button onClick={() => handleDelete(student.id)} className="text-on-surface-variant hover:text-error transition-colors p-1" title="Delete">
+                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -261,10 +358,6 @@ const StudentManagement = () => {
                   <label className="font-label-sm text-on-surface-variant block mb-1">Student ID</label>
                   <input required type="text" name="student_id" value={formData.student_id} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" placeholder="e.g. STU-2023-001" />
                 </div>
-                <div className="flex-1">
-                  <label className="font-label-sm text-on-surface-variant block mb-1">Join Date</label>
-                  <input required type="date" name="created_at" value={formData.created_at} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" />
-                </div>
               </div>
 
               <div>
@@ -279,8 +372,8 @@ const StudentManagement = () => {
               
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="font-label-sm text-on-surface-variant block mb-1">Enrolled Courses</label>
-                  <input type="number" name="enrolled_courses" min="0" value={formData.enrolled_courses} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" />
+                  <label className="font-label-sm text-on-surface-variant block mb-1">Enrolled Courses (Codes)</label>
+                  <input type="text" name="enrolled_courses" value={Array.isArray(formData.enrolled_courses) ? formData.enrolled_courses.join(', ') : (formData.enrolled_courses || '')} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" placeholder="e.g. CS101, MATH200" />
                 </div>
                 <div className="flex-1">
                   <SelectField
@@ -300,8 +393,8 @@ const StudentManagement = () => {
                 <button type="button" onClick={handleCloseModal} className="px-5 py-2 rounded-lg font-label-md text-on-surface-variant hover:bg-surface-container-highest transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2 rounded-lg bg-primary text-white font-label-md hover:bg-primary-container transition-colors flex items-center gap-2">
-                  {editingStudent ? 'Save Changes' : 'Create Student'}
+                <button disabled={isSaving} type="submit" className="px-5 py-2 rounded-lg bg-primary text-white font-label-md hover:bg-primary-container transition-colors flex items-center gap-2 disabled:opacity-50">
+                  {isSaving ? 'Saving...' : editingStudent ? 'Save Changes' : 'Create Student'}
                 </button>
               </div>
             </form>

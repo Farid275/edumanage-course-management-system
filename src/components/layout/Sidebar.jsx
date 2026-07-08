@@ -6,7 +6,7 @@ const navItems = [
   { path: '/lecturer/dashboard', icon: 'dashboard', label: 'Dashboard', roles: ['lecturer'] },
   { path: '/student/dashboard', icon: 'dashboard', label: 'Dashboard', roles: ['student'] },
   { path: '/courses', icon: 'school', label: 'Courses', roles: ['admin', 'lecturer', 'student'] },
-  { path: '/students', icon: 'group', label: 'Students', roles: ['admin', 'lecturer'] },
+  { path: '/students', icon: 'group', label: 'Students', roles: ['admin', 'lecturer', 'student'] },
   { path: '/lecturers', icon: 'record_voice_over', label: 'Lecturers', roles: ['admin'] },
   { path: '/assignments', icon: 'assignment', label: 'Assignments', roles: ['admin', 'lecturer', 'student'] },
   { path: '/attendance', icon: 'calendar_today', label: 'Attendance', roles: ['admin', 'lecturer', 'student'] },
