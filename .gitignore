@@ -33,3 +33,7 @@ dist-ssr
 .env
 node_modules
 dist
+.env
+.env.local
+node_modules/
+dist/
