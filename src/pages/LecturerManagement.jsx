@@ -1,20 +1,15 @@
-import React, { useState } from 'react';
-import { lecturers as initialLecturers } from '../data/dummyData';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../context/AuthContext';
 import PageContainer from '../components/layout/PageContainer';
 import AnimatedModal from '../components/animations/AnimatedModal';
 import SelectField from '../components/ui/SelectField';
 
 const LecturerManagement = () => {
-  const [lecturersList, setLecturersList] = useState(() => initialLecturers.map(l => ({
-    id: l.id,
-    lecturer_name: l.name,
-    lecturer_id: l.lecturerId,
-    email: l.email,
-    department: l.department,
-    assigned_courses: Array.isArray(l.courses) ? l.courses.filter(c => !c.startsWith('+')).join(', ') : '',
-    status: l.status === 'On Leave' ? 'Inactive' : l.status, // Map 'On Leave' to 'Inactive' for simplicity
-    created_at: new Date().toISOString().split('T')[0]
-  })));
+  const { user, role } = useAuth();
+  const [lecturersList, setLecturersList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -22,6 +17,7 @@ const LecturerManagement = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLecturer, setEditingLecturer] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     lecturer_name: '',
@@ -29,9 +25,31 @@ const LecturerManagement = () => {
     email: '',
     department: '',
     assigned_courses: '',
-    status: 'Active',
-    created_at: new Date().toISOString().split('T')[0]
+    status: 'Active'
   });
+
+  useEffect(() => {
+    fetchLecturers();
+  }, []);
+
+  const fetchLecturers = async () => {
+    setIsLoading(true);
+    setErrorMsg('');
+    try {
+      const { data, error } = await supabase
+        .from('lecturers')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setLecturersList(data || []);
+    } catch (err) {
+      console.error('Error fetching lecturers:', err);
+      setErrorMsg(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getStatusClass = (status) => {
     switch(status) {
@@ -53,7 +71,10 @@ const LecturerManagement = () => {
   const handleOpenModal = (lecturer = null) => {
     if (lecturer) {
       setEditingLecturer(lecturer);
-      setFormData({ ...lecturer });
+      setFormData({
+        ...lecturer,
+        assigned_courses: Array.isArray(lecturer.assigned_courses) ? lecturer.assigned_courses.join(', ') : (lecturer.assigned_courses || '')
+      });
     } else {
       setEditingLecturer(null);
       setFormData({
@@ -62,8 +83,7 @@ const LecturerManagement = () => {
         email: '',
         department: '',
         assigned_courses: '',
-        status: 'Active',
-        created_at: new Date().toISOString().split('T')[0]
+        status: 'Active'
       });
     }
     setIsModalOpen(true);
@@ -79,25 +99,77 @@ const LecturerManagement = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editingLecturer) {
-      setLecturersList(lecturersList.map(l => 
-        l.id === editingLecturer.id ? { ...l, ...formData } : l
-      ));
-    } else {
-      const newLecturer = {
-        id: Date.now(),
-        ...formData
+    setIsSaving(true);
+
+    try {
+      const payload = {
+        lecturer_name: formData.lecturer_name.trim(),
+        lecturer_id: formData.lecturer_id.trim(),
+        email: formData.email.trim(),
+        department: formData.department.trim(),
+        assigned_courses: Array.isArray(formData.assigned_courses)
+          ? formData.assigned_courses
+          : String(formData.assigned_courses || '')
+              .split(',')
+              .map(item => item.trim())
+              .filter(Boolean),
+        status: formData.status || 'Active',
+        created_by: user.id
       };
-      setLecturersList([newLecturer, ...lecturersList]);
+
+      if (editingLecturer) {
+        const { error } = await supabase
+          .from('lecturers')
+          .update(payload)
+          .eq('id', editingLecturer.id);
+          
+        if (error) {
+          console.error('Supabase lecturer update error:', error);
+          alert(error.message);
+          return;
+        }
+      } else {
+        const { error } = await supabase
+          .from('lecturers')
+          .insert([payload]);
+          
+        if (error) {
+          console.error('Supabase lecturer insert error:', error);
+          alert(error.message);
+          return;
+        }
+      }
+      
+      await fetchLecturers();
+      handleCloseModal();
+    } catch (err) {
+      console.error('Supabase lecturer save error:', err);
+      alert(err.message);
+    } finally {
+      setIsSaving(false);
     }
-    handleCloseModal();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this lecturer?")) {
-      setLecturersList(lecturersList.filter(l => l.id !== id));
+      try {
+        const { error } = await supabase
+          .from('lecturers')
+          .delete()
+          .eq('id', id);
+          
+        if (error) {
+          console.error('Supabase lecturer delete error:', error);
+          alert(error.message);
+          return;
+        }
+        await fetchLecturers();
+      } catch (err) {
+        console.error('Supabase lecturer delete error:', err);
+        alert(err.message);
+      }
     }
   };
 
@@ -125,13 +197,15 @@ const LecturerManagement = () => {
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">Manage faculty members, assignments, and departmental roles.</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button 
-            onClick={() => handleOpenModal()}
-            className="flex items-center justify-center gap-2 bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md px-6 py-2.5 rounded-lg transition-colors shadow-sm hover:bg-tertiary-fixed-dim"
-          >
-            <span className="material-symbols-outlined text-[18px]">person_add</span>
-            Add Lecturer
-          </button>
+          {role === 'admin' && (
+            <button 
+              onClick={() => handleOpenModal()}
+              className="flex items-center justify-center gap-2 bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md px-6 py-2.5 rounded-lg transition-colors shadow-sm hover:bg-tertiary-fixed-dim"
+            >
+              <span className="material-symbols-outlined text-[18px]">person_add</span>
+              Add Lecturer
+            </button>
+          )}
         </div>
       </div>
 
@@ -185,7 +259,25 @@ const LecturerManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container-highest bg-surface-container-lowest">
-              {filteredLecturers.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan="7" className="p-12 text-center text-on-surface-variant font-label-md">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="material-symbols-outlined animate-spin text-[32px] text-primary">refresh</span>
+                      <p>Loading lecturers from Supabase...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : errorMsg ? (
+                <tr>
+                  <td colSpan="7" className="p-12 text-center text-error font-label-md">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="material-symbols-outlined text-[48px]">error</span>
+                      <p>{errorMsg}</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredLecturers.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="p-12 text-center text-on-surface-variant font-label-md">
                     <div className="flex flex-col items-center gap-2">
@@ -212,14 +304,16 @@ const LecturerManagement = () => {
                     <td className="py-4 px-4 font-body-sm text-body-sm text-on-surface-variant">{lecturer.department}</td>
                     <td className="py-4 px-4">
                       <div className="flex flex-wrap gap-1">
-                        {lecturer.assigned_courses.split(',').filter(Boolean).map((course, idx) => (
+                        {(Array.isArray(lecturer.assigned_courses) ? lecturer.assigned_courses : []).map((course, idx) => (
                           <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-md bg-secondary-fixed/50 text-on-secondary-container font-label-sm text-label-sm whitespace-nowrap">
                             {course.trim()}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="py-4 px-4 font-body-sm text-body-sm text-on-surface-variant">{lecturer.created_at}</td>
+                    <td className="py-4 px-4 font-body-sm text-body-sm text-on-surface-variant">
+                      {lecturer.created_at ? new Date(lecturer.created_at).toLocaleDateString() : '-'}
+                    </td>
                     <td className="py-4 px-4">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full font-label-sm text-label-sm ${getStatusClass(lecturer.status)}`}>
                         {lecturer.status}
@@ -227,12 +321,16 @@ const LecturerManagement = () => {
                     </td>
                     <td className="py-4 px-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleOpenModal(lecturer)} className="text-on-surface-variant hover:text-secondary-container transition-colors p-1" title="Edit">
-                          <span className="material-symbols-outlined text-[20px]">edit</span>
-                        </button>
-                        <button onClick={() => handleDelete(lecturer.id)} className="text-on-surface-variant hover:text-error transition-colors p-1" title="Delete">
-                          <span className="material-symbols-outlined text-[20px]">delete</span>
-                        </button>
+                        {role === 'admin' && (
+                          <>
+                            <button onClick={() => handleOpenModal(lecturer)} className="text-on-surface-variant hover:text-secondary-container transition-colors p-1" title="Edit">
+                              <span className="material-symbols-outlined text-[20px]">edit</span>
+                            </button>
+                            <button onClick={() => handleDelete(lecturer.id)} className="text-on-surface-variant hover:text-error transition-colors p-1" title="Delete">
+                              <span className="material-symbols-outlined text-[20px]">delete</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -261,10 +359,6 @@ const LecturerManagement = () => {
                 <div className="flex-1">
                   <label className="font-label-sm text-on-surface-variant block mb-1">Lecturer ID</label>
                   <input required type="text" name="lecturer_id" value={formData.lecturer_id} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" placeholder="e.g. LEC-2023-001" />
-                </div>
-                <div className="flex-1">
-                  <label className="font-label-sm text-on-surface-variant block mb-1">Join Date</label>
-                  <input required type="date" name="created_at" value={formData.created_at} onChange={handleChange} className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none" />
                 </div>
               </div>
 
@@ -297,8 +391,8 @@ const LecturerManagement = () => {
                 <button type="button" onClick={handleCloseModal} className="px-5 py-2 rounded-lg font-label-md text-on-surface-variant hover:bg-surface-container-highest transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2 rounded-lg bg-primary text-white font-label-md hover:bg-primary-container transition-colors flex items-center gap-2">
-                  {editingLecturer ? 'Save Changes' : 'Create Lecturer'}
+                <button disabled={isSaving} type="submit" className="px-5 py-2 rounded-lg bg-primary text-white font-label-md hover:bg-primary-container transition-colors flex items-center gap-2 disabled:opacity-50">
+                  {isSaving ? 'Saving...' : editingLecturer ? 'Save Changes' : 'Create Lecturer'}
                 </button>
               </div>
             </form>
