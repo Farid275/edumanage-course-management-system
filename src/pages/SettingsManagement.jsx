@@ -1,41 +1,189 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
 import PageContainer from '../components/layout/PageContainer';
 import SelectField from '../components/ui/SelectField';
 
 const SettingsManagement = () => {
   const [activeTab, setActiveTab] = useState('Profile');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   
-  // Local state for all forms
+  const [authUser, setAuthUser] = useState(null);
+
   const [formData, setFormData] = useState({
-    // Profile
-    firstName: 'Admin',
-    lastName: 'User',
-    email: 'admin@edumanage.edu',
+    full_name: '',
+    role: '',
+    email: '',
+    
+    theme: 'Light',
+    language: 'English',
+    timezone: 'Asia/Jakarta',
+    dashboard_view: 'Default',
+    email_notifications: true,
+    push_notifications: false,
+    
+    // Mock UI fields
     phone: '+1 (555) 123-4567',
     department: 'Computer Science',
-    role: 'System Administrator',
-    
-    // Security
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
     twoFactorAuth: false,
-    
-    // Notifications
-    emailNotifications: true,
-    assignmentDeadline: true,
-    attendanceAlert: false,
-    gradeUpdate: true,
-    systemAnnouncement: true,
-    
-    // Preferences
-    theme: 'system',
-    language: 'en',
-    timezone: 'UTC-5',
     academicYear: '2023-2024'
   });
 
   const [formErrors, setFormErrors] = useState({});
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    setError(null);
+  
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+  
+      if (userError) {
+        console.error('Supabase get user error:', userError);
+        setError(userError.message);
+        return;
+      }
+  
+      if (!user) {
+        setError('No authenticated user found');
+        return;
+      }
+  
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, full_name, role, created_at')
+        .eq('id', user.id)
+        .single();
+  
+      if (profileError) {
+        console.error('Supabase profile fetch error:', profileError);
+        setError(profileError.message);
+        return;
+      }
+  
+      let { data: preferences, error: preferencesError } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+  
+      if (preferencesError) {
+        console.error('Supabase preferences fetch error:', preferencesError);
+        setError(preferencesError.message);
+        return;
+      }
+  
+      if (!preferences) {
+        const { data: createdPreferences, error: createPreferencesError } = await supabase
+          .from('user_preferences')
+          .insert([{
+            user_id: user.id,
+            theme: 'Light',
+            language: 'English',
+            timezone: 'Asia/Jakarta',
+            email_notifications: true,
+            push_notifications: false,
+            dashboard_view: 'Default'
+          }])
+          .select()
+          .single();
+  
+        if (createPreferencesError) {
+          console.error('Supabase preferences create error:', createPreferencesError);
+          setError(createPreferencesError.message);
+          return;
+        }
+  
+        preferences = createdPreferences;
+      }
+  
+      setAuthUser(user);
+      
+      setFormData(prev => ({
+        ...prev,
+        full_name: profile?.full_name || '',
+        role: profile?.role || '',
+        email: user?.email || '',
+        theme: preferences?.theme || 'Light',
+        language: preferences?.language || 'English',
+        timezone: preferences?.timezone || 'Asia/Jakarta',
+        dashboard_view: preferences?.dashboard_view || 'Default',
+        email_notifications: preferences?.email_notifications ?? true,
+        push_notifications: preferences?.push_notifications ?? false,
+      }));
+  
+    } catch (err) {
+      console.error('Settings unexpected error:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveSettings = async (e) => {
+    if (e) e.preventDefault();
+    setSaving(true);
+  
+    try {
+      const fullName = String(formData.full_name || '').trim();
+  
+      if (!fullName) {
+        alert('Full name is required');
+        setSaving(false);
+        return;
+      }
+  
+      const { error: profileUpdateError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName
+        })
+        .eq('id', authUser.id);
+  
+      if (profileUpdateError) {
+        console.error('Supabase profile update error:', profileUpdateError);
+        alert(profileUpdateError.message);
+        setSaving(false);
+        return;
+      }
+  
+      const { error: preferencesUpdateError } = await supabase
+        .from('user_preferences')
+        .update({
+          theme: formData.theme || 'Light',
+          language: formData.language || 'English',
+          timezone: formData.timezone || 'Asia/Jakarta',
+          email_notifications: Boolean(formData.email_notifications),
+          push_notifications: Boolean(formData.push_notifications),
+          dashboard_view: formData.dashboard_view || 'Default'
+        })
+        .eq('user_id', authUser.id);
+  
+      if (preferencesUpdateError) {
+        console.error('Supabase preferences update error:', preferencesUpdateError);
+        alert(preferencesUpdateError.message);
+        setSaving(false);
+        return;
+      }
+  
+      await fetchSettings();
+      alert('Settings saved successfully');
+  
+    } catch (err) {
+      console.error('Settings save unexpected error:', err);
+      alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -44,60 +192,36 @@ const SettingsManagement = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Clear error for the field being edited
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: null }));
     }
   };
 
-  const validateProfile = () => {
-    const errors = {};
-    if (!formData.firstName.trim()) errors.firstName = 'First Name is required';
-    if (!formData.lastName.trim()) errors.lastName = 'Last Name is required';
-    if (!formData.email.trim()) errors.email = 'Email is required';
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const validateSecurity = () => {
-    const errors = {};
-    if (!formData.currentPassword.trim()) errors.currentPassword = 'Required';
-    if (!formData.newPassword.trim()) errors.newPassword = 'Required';
-    if (formData.newPassword !== formData.confirmPassword) errors.confirmPassword = 'Passwords do not match';
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSaveProfile = (e) => {
-    e.preventDefault();
-    if (validateProfile()) {
-      alert('Profile Settings saved successfully to local state!');
-    }
-  };
-
-  const handleSaveSecurity = (e) => {
-    e.preventDefault();
-    if (validateSecurity()) {
-      alert('Security Settings updated successfully to local state!');
-      setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
-    }
-  };
-
-  const handleSaveNotifications = (e) => {
-    e.preventDefault();
-    alert('Notification Preferences saved successfully to local state!');
-  };
-
-  const handleSavePreferences = (e) => {
-    e.preventDefault();
-    alert('System Preferences saved successfully to local state!');
-  };
-
   const handleEditPermissions = (role) => {
     alert(`Editing permissions for ${role} role (Dummy Action)`);
   };
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center p-12 mt-10">
+          <span className="material-symbols-outlined animate-spin text-[48px] text-primary mb-4">refresh</span>
+          <p className="font-label-lg text-on-surface-variant">Loading settings...</p>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center p-12 mt-10 bg-error-container/10 rounded-xl border border-error/30">
+          <span className="material-symbols-outlined text-[48px] text-error mb-4">error</span>
+          <p className="font-label-lg text-error">Failed to load settings: {error}</p>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -134,7 +258,7 @@ const SettingsManagement = () => {
         <div className="flex-1 bg-white border border-surface-container-highest rounded-xl p-6 shadow-sm min-h-[500px]">
           
           {activeTab === 'Profile' && (
-            <form onSubmit={handleSaveProfile} className="animate-in fade-in duration-300 space-y-6">
+            <form onSubmit={saveSettings} className="animate-in fade-in duration-300 space-y-6">
               <h3 className="font-headline-md text-primary mb-6 border-b border-surface-container-highest pb-2">Profile Settings</h3>
               
               <div className="flex items-center gap-6 mb-8">
@@ -151,19 +275,13 @@ const SettingsManagement = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="font-label-sm text-on-surface-variant block mb-1">First Name *</label>
-                  <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} className={`w-full bg-surface border ${formErrors.firstName ? 'border-error' : 'border-outline-variant'} rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none`} />
-                  {formErrors.firstName && <p className="text-error text-xs mt-1">{formErrors.firstName}</p>}
+                  <label className="font-label-sm text-on-surface-variant block mb-1">Full Name *</label>
+                  <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} className={`w-full bg-surface border ${formErrors.full_name ? 'border-error' : 'border-outline-variant'} rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none`} />
+                  {formErrors.full_name && <p className="text-error text-xs mt-1">{formErrors.full_name}</p>}
                 </div>
                 <div>
-                  <label className="font-label-sm text-on-surface-variant block mb-1">Last Name *</label>
-                  <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} className={`w-full bg-surface border ${formErrors.lastName ? 'border-error' : 'border-outline-variant'} rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none`} />
-                  {formErrors.lastName && <p className="text-error text-xs mt-1">{formErrors.lastName}</p>}
-                </div>
-                <div>
-                  <label className="font-label-sm text-on-surface-variant block mb-1">Email Address *</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleChange} className={`w-full bg-surface border ${formErrors.email ? 'border-error' : 'border-outline-variant'} rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none`} />
-                  {formErrors.email && <p className="text-error text-xs mt-1">{formErrors.email}</p>}
+                  <label className="font-label-sm text-on-surface-variant block mb-1">Email Address (Read Only)</label>
+                  <input type="email" name="email" value={formData.email} disabled className="w-full bg-surface-variant text-on-surface-variant border border-outline-variant rounded-lg px-3 py-2 text-body-md outline-none cursor-not-allowed" />
                 </div>
                 <div>
                   <label className="font-label-sm text-on-surface-variant block mb-1">Phone Number</label>
@@ -175,38 +293,35 @@ const SettingsManagement = () => {
                 </div>
                 <div>
                   <label className="font-label-sm text-on-surface-variant block mb-1">Role (Read Only)</label>
-                  <input type="text" name="role" value={formData.role} disabled className="w-full bg-surface-variant text-on-surface-variant border border-outline-variant rounded-lg px-3 py-2 text-body-md outline-none cursor-not-allowed" />
+                  <input type="text" name="role" value={formData.role} disabled className="w-full bg-surface-variant text-on-surface-variant border border-outline-variant rounded-lg px-3 py-2 text-body-md outline-none cursor-not-allowed capitalize" />
                 </div>
               </div>
 
               <div className="mt-8 pt-4 border-t border-surface-container-highest">
-                <button type="submit" className="bg-primary text-white font-label-md px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm">
+                <button disabled={saving} type="submit" className="bg-primary text-white font-label-md px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm disabled:opacity-50">
                   <span className="material-symbols-outlined text-[18px]">save</span>
-                  Save Profile
+                  {saving ? 'Saving...' : 'Save Profile'}
                 </button>
               </div>
             </form>
           )}
 
           {activeTab === 'Security' && (
-            <form onSubmit={handleSaveSecurity} className="animate-in fade-in duration-300 space-y-6">
+            <form onSubmit={(e) => { e.preventDefault(); alert("Security credentials mock (non-functional for demo)."); }} className="animate-in fade-in duration-300 space-y-6">
               <h3 className="font-headline-md text-primary mb-6 border-b border-surface-container-highest pb-2">Account Security</h3>
               
               <div className="space-y-4 max-w-md mb-8">
                 <div>
                   <label className="font-label-sm text-on-surface-variant block mb-1">Current Password *</label>
                   <input type="password" name="currentPassword" value={formData.currentPassword} onChange={handleChange} className={`w-full bg-surface border ${formErrors.currentPassword ? 'border-error' : 'border-outline-variant'} rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none`} />
-                  {formErrors.currentPassword && <p className="text-error text-xs mt-1">{formErrors.currentPassword}</p>}
                 </div>
                 <div>
                   <label className="font-label-sm text-on-surface-variant block mb-1">New Password *</label>
                   <input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} className={`w-full bg-surface border ${formErrors.newPassword ? 'border-error' : 'border-outline-variant'} rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none`} />
-                  {formErrors.newPassword && <p className="text-error text-xs mt-1">{formErrors.newPassword}</p>}
                 </div>
                 <div>
                   <label className="font-label-sm text-on-surface-variant block mb-1">Confirm New Password *</label>
                   <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className={`w-full bg-surface border ${formErrors.confirmPassword ? 'border-error' : 'border-outline-variant'} rounded-lg px-3 py-2 text-body-md focus:border-secondary-container outline-none`} />
-                  {formErrors.confirmPassword && <p className="text-error text-xs mt-1">{formErrors.confirmPassword}</p>}
                 </div>
               </div>
 
@@ -232,16 +347,13 @@ const SettingsManagement = () => {
           )}
 
           {activeTab === 'Notifications' && (
-            <form onSubmit={handleSaveNotifications} className="animate-in fade-in duration-300 space-y-6">
+            <form onSubmit={saveSettings} className="animate-in fade-in duration-300 space-y-6">
               <h3 className="font-headline-md text-primary mb-6 border-b border-surface-container-highest pb-2">Notification Preferences</h3>
               
               <div className="space-y-6">
                 {[
-                  { name: 'emailNotifications', label: 'Email Notifications', desc: 'Receive critical account and system updates via email.' },
-                  { name: 'assignmentDeadline', label: 'Assignment Deadline Reminders', desc: 'Get alerted 24 hours before an assignment is due.' },
-                  { name: 'attendanceAlert', label: 'Attendance Alerts', desc: 'Notify when attendance drops below the required threshold.' },
-                  { name: 'gradeUpdate', label: 'Grade Update Notifications', desc: 'Alert when a new grade is published.' },
-                  { name: 'systemAnnouncement', label: 'System Announcements', desc: 'Receive notifications about maintenance and updates.' }
+                  { name: 'email_notifications', label: 'Email Notifications', desc: 'Receive critical account and system updates via email.' },
+                  { name: 'push_notifications', label: 'Push Notifications', desc: 'Get alerted via desktop push notifications.' }
                 ].map(toggle => (
                   <label key={toggle.name} className="flex items-center gap-3 cursor-pointer">
                     <div className="relative flex-shrink-0">
@@ -257,9 +369,9 @@ const SettingsManagement = () => {
               </div>
 
               <div className="mt-8 pt-4 border-t border-surface-container-highest">
-                <button type="submit" className="bg-primary text-white font-label-md px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm">
+                <button disabled={saving} type="submit" className="bg-primary text-white font-label-md px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm disabled:opacity-50">
                   <span className="material-symbols-outlined text-[18px]">save</span>
-                  Save Notification Settings
+                  {saving ? 'Saving...' : 'Save Notification Settings'}
                 </button>
               </div>
             </form>
@@ -331,7 +443,7 @@ const SettingsManagement = () => {
           )}
 
           {activeTab === 'Preferences' && (
-            <form onSubmit={handleSavePreferences} className="animate-in fade-in duration-300 space-y-6">
+            <form onSubmit={saveSettings} className="animate-in fade-in duration-300 space-y-6">
               <h3 className="font-headline-md text-primary mb-6 border-b border-surface-container-highest pb-2">System Preferences</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
@@ -342,10 +454,10 @@ const SettingsManagement = () => {
                   value={formData.language}
                   onChange={handleChange}
                 >
-                  <option value="en">English (US)</option>
-                  <option value="es">Spanish</option>
-                  <option value="fr">French</option>
-                  <option value="id">Indonesian</option>
+                  <option value="English">English</option>
+                  <option value="Spanish">Spanish</option>
+                  <option value="French">French</option>
+                  <option value="Indonesian">Indonesian</option>
                 </SelectField>
                 <SelectField
                   label="Timezone"
@@ -354,10 +466,10 @@ const SettingsManagement = () => {
                   value={formData.timezone}
                   onChange={handleChange}
                 >
-                  <option value="UTC-8">Pacific Time (PT) UTC-8</option>
-                  <option value="UTC-5">Eastern Time (ET) UTC-5</option>
-                  <option value="UTC+0">Coordinated Universal Time (UTC)</option>
-                  <option value="UTC+7">Western Indonesia Time (WIB) UTC+7</option>
+                  <option value="America/Los_Angeles">Pacific Time (America/Los_Angeles)</option>
+                  <option value="America/New_York">Eastern Time (America/New_York)</option>
+                  <option value="UTC">Coordinated Universal Time (UTC)</option>
+                  <option value="Asia/Jakarta">Western Indonesia Time (Asia/Jakarta)</option>
                 </SelectField>
                 <SelectField
                   label="Theme"
@@ -366,27 +478,26 @@ const SettingsManagement = () => {
                   value={formData.theme}
                   onChange={handleChange}
                 >
-                  <option value="light">Light Mode</option>
-                  <option value="dark">Dark Mode</option>
-                  <option value="system">Use System Default</option>
+                  <option value="Light">Light Mode</option>
+                  <option value="Dark">Dark Mode</option>
+                  <option value="System">Use System Default</option>
                 </SelectField>
                 <SelectField
-                  label="Academic Year"
+                  label="Dashboard View"
                   wrapperClassName="relative"
-                  name="academicYear"
-                  value={formData.academicYear}
+                  name="dashboard_view"
+                  value={formData.dashboard_view}
                   onChange={handleChange}
                 >
-                  <option value="2022-2023">2022 - 2023</option>
-                  <option value="2023-2024">2023 - 2024</option>
-                  <option value="2024-2025">2024 - 2025</option>
+                  <option value="Default">Default</option>
+                  <option value="Compact">Compact</option>
                 </SelectField>
               </div>
 
               <div className="mt-8 pt-4 border-t border-surface-container-highest">
-                <button type="submit" className="bg-primary text-white font-label-md px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm">
+                <button disabled={saving} type="submit" className="bg-primary text-white font-label-md px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm disabled:opacity-50">
                   <span className="material-symbols-outlined text-[18px]">save</span>
-                  Save System Preferences
+                  {saving ? 'Saving...' : 'Save System Preferences'}
                 </button>
               </div>
             </form>

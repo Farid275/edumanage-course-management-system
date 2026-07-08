@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { courses as dummyCourses, lecturers as dummyLecturers } from '../data/dummyData'; // Will be removed, fetching live courses now
 import PageContainer from '../components/layout/PageContainer';
 import AnimatedModal from '../components/animations/AnimatedModal';
 import SelectField from '../components/ui/SelectField';
