@@ -1,35 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, role, login } = useAuth();
+  const { user, role, login, signUp } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('student');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (!loading && user && role) {
+      console.log('Login: User is already logged in with role:', role);
       if (role === 'admin') navigate('/admin/dashboard', { replace: true });
       else if (role === 'lecturer') navigate('/lecturer/dashboard', { replace: true });
       else navigate('/student/dashboard', { replace: true });
     }
-  }, [user, role, navigate]);
+  }, [loading, user, role, navigate]);
 
-  const handleSubmit = (e) => {
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center bg-surface-container-lowest gap-4">
+        <span className="material-symbols-outlined animate-spin text-[32px] text-primary">refresh</span>
+        <p className="font-body-md text-on-surface-variant">Checking session...</p>
+      </div>
+    );
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg('');
 
-    // Mock authentication delay
-    setTimeout(() => {
-      login(email, selectedRole);
-    }, 600);
+    try {
+      if (isSignUp) {
+        const defaultFullName = email.split('@')[0].split('.').map(name => name.charAt(0).toUpperCase() + name.slice(1)).join(' ');
+        
+        const { data, error } = await signUp(email, password, {
+          data: {
+            full_name: defaultFullName,
+            role: selectedRole
+          }
+        });
+        
+        if (error) throw error;
+        
+        setSuccessMsg('Account created successfully. Please sign in.');
+        setIsSignUp(false);
+        setPassword('');
+      } else {
+        const { error } = await login(email, password);
+        if (error) {
+          if (error.message && error.message.toLowerCase().includes('email not confirmed')) {
+            throw new Error("Email not confirmed. Please confirm your email or disable email confirmation for development.");
+          }
+          throw error;
+        }
+        setSuccessMsg('');
+      }
+    } catch (err) {
+      console.error('Auth error:', err);
+      setErrorMsg(err.message);
+      setSuccessMsg(''); // Clear success messages when a new error appears
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,6 +97,18 @@ const Login = () => {
               {isSignUp ? 'Sign up for your academic portal.' : 'Sign in to your academic portal.'}
             </p>
           </div>
+
+          {errorMsg && (
+            <div className="mb-6 p-4 bg-error-container text-on-error-container text-body-md rounded-lg text-center">
+              {errorMsg}
+            </div>
+          )}
+          
+          {successMsg && (
+            <div className="mb-6 p-4 bg-primary-container text-on-primary-container text-body-md rounded-lg text-center">
+              {successMsg}
+            </div>
+          )}
 
           {/* Form */}
           <form className="space-y-6" onSubmit={handleSubmit}>
@@ -169,7 +224,11 @@ const Login = () => {
             <div className="text-center mt-4">
               <button 
                 type="button" 
-                onClick={() => setIsSignUp(!isSignUp)}
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setErrorMsg('');
+                  setSuccessMsg('');
+                }}
                 className="font-label-md text-label-md text-secondary hover:text-primary transition-colors"
               >
                 {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}

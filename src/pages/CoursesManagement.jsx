@@ -1,20 +1,17 @@
-import React, { useState } from 'react';
-import { courses as initialCourses } from '../data/dummyData';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../context/AuthContext';
 import PageContainer from '../components/layout/PageContainer';
 import AnimatedModal from '../components/animations/AnimatedModal';
 import SelectField from '../components/ui/SelectField';
 
 const CoursesManagement = () => {
-  const [courses, setCourses] = useState(() => initialCourses.map(c => ({
-    id: c.id,
-    course_name: c.name,
-    course_code: c.code,
-    lecturer: c.lecturer,
-    semester: c.semester,
-    student_count: c.students,
-    status: c.status,
-    description: ''
-  })));
+  const { user, role } = useAuth();
+  
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [semesterFilter, setSemesterFilter] = useState('All Semesters');
@@ -31,6 +28,31 @@ const CoursesManagement = () => {
     status: 'Active',
     description: ''
   });
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // The DB schema now exactly matches our local state variables
+      setCourses(data);
+    } catch (err) {
+      console.error('Error fetching courses:', err.message);
+      setError('Failed to load courses. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusClass = (status) => {
     switch(status) {
@@ -81,27 +103,62 @@ const CoursesManagement = () => {
     }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editingCourse) {
-      setCourses(courses.map(c => 
-        c.id === editingCourse.id 
-          ? { ...c, ...formData }
-          : c
-      ));
-    } else {
-      const newCourse = {
-        id: Date.now(),
-        ...formData
+    try {
+      if (!formData.course_name || !formData.course_code || !formData.lecturer || !formData.semester) {
+        alert("Please fill all required fields.");
+        return;
+      }
+
+      const payload = {
+        course_name: formData.course_name,
+        course_code: formData.course_code,
+        lecturer: formData.lecturer,
+        semester: formData.semester,
+        student_count: parseInt(formData.student_count) || 0,
+        status: formData.status,
+        description: formData.description
       };
-      setCourses([newCourse, ...courses]);
+
+      if (editingCourse) {
+        const { error } = await supabase
+          .from('courses')
+          .update(payload)
+          .eq('id', editingCourse.id);
+        
+        if (error) throw error;
+      } else {
+        payload.created_by = user.id; // Assign creator on new insert
+        const { error } = await supabase
+          .from('courses')
+          .insert([payload]);
+        
+        if (error) throw error;
+      }
+
+      await fetchCourses();
+      handleCloseModal();
+    } catch (err) {
+      console.error('Supabase insert error:', err);
+      alert(err.message || 'Failed to save course. Please check your connection.');
     }
-    handleCloseModal();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this course?")) {
-      setCourses(courses.filter(c => c.id !== id));
+      try {
+        const { error } = await supabase
+          .from('courses')
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+        await fetchCourses();
+      } catch (err) {
+        console.error('Error deleting course:', err.message);
+        alert('Failed to delete course.');
+      }
     }
   };
 
@@ -127,13 +184,15 @@ const CoursesManagement = () => {
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">Manage curriculum, assignments, and course offerings.</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button 
-            onClick={() => handleOpenModal()}
-            className="bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary-fixed-dim transition-colors shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[18px]" data-icon="add">add</span>
-            Add Course
-          </button>
+          {role !== 'student' && (
+            <button 
+              onClick={() => handleOpenModal()}
+              className="bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary-fixed-dim transition-colors shadow-sm"
+            >
+              <span className="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+              Add Course
+            </button>
+          )}
         </div>
       </div>
       
@@ -185,7 +244,26 @@ const CoursesManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container-highest">
-              {filteredCourses.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="p-8 text-center text-on-surface-variant font-label-md">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="material-symbols-outlined animate-spin text-[32px] text-primary">refresh</span>
+                      <p>Loading courses...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan="7" className="p-8 text-center text-error font-label-md">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="material-symbols-outlined text-[48px] text-error">error</span>
+                      <p>{error}</p>
+                      <button onClick={fetchCourses} className="mt-2 text-primary hover:underline">Try Again</button>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredCourses.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="p-8 text-center text-on-surface-variant font-label-md">
                     <div className="flex flex-col items-center gap-2">
@@ -208,8 +286,12 @@ const CoursesManagement = () => {
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button className="text-on-surface-variant hover:text-secondary-container transition-colors"><span className="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span></button>
-                        <button onClick={() => handleOpenModal(course)} className="text-on-surface-variant hover:text-secondary-container transition-colors"><span className="material-symbols-outlined text-[20px]" data-icon="edit">edit</span></button>
-                        <button onClick={() => handleDelete(course.id)} className="text-on-surface-variant hover:text-error transition-colors"><span className="material-symbols-outlined text-[20px]" data-icon="delete">delete</span></button>
+                        {role !== 'student' && (
+                          <button onClick={() => handleOpenModal(course)} className="text-on-surface-variant hover:text-secondary-container transition-colors"><span className="material-symbols-outlined text-[20px]" data-icon="edit">edit</span></button>
+                        )}
+                        {role === 'admin' && (
+                          <button onClick={() => handleDelete(course.id)} className="text-on-surface-variant hover:text-error transition-colors"><span className="material-symbols-outlined text-[20px]" data-icon="delete">delete</span></button>
+                        )}
                       </div>
                     </td>
                   </tr>
