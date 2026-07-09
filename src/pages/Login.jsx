@@ -10,7 +10,6 @@ const Login = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState('student');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -46,14 +45,13 @@ const Login = () => {
         
         const { data, error } = await signUp(email, password, {
           data: {
-            full_name: defaultFullName,
-            role: selectedRole
+            full_name: defaultFullName
           }
         });
         
         if (error) throw error;
         
-        setSuccessMsg('Account created successfully. Please sign in.');
+        setSuccessMsg('Account created successfully. Student access has been assigned by default.');
         setIsSignUp(false);
         setPassword('');
       } else {
@@ -110,50 +108,14 @@ const Login = () => {
             </div>
           )}
 
+          {isSignUp && (
+            <div className="mb-6 p-4 bg-surface-container-low text-on-surface-variant text-body-sm rounded-lg border border-outline-variant/30 text-center">
+              Only students can register themselves. Admin and lecturer accounts are created by the system administrator.
+            </div>
+          )}
+
           {/* Form */}
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Role Selector - Now visible for both Sign Up and Login */}
-            <div className="grid grid-cols-3 gap-2 p-1 bg-surface-container-low rounded-lg border border-outline-variant/30 mb-6">
-              <label className="cursor-pointer relative">
-                <input 
-                  className="peer sr-only" 
-                  name="role" 
-                  type="radio" 
-                  value="student" 
-                  checked={selectedRole === 'student'}
-                  onChange={() => setSelectedRole('student')}
-                />
-                <div className="text-center py-2 rounded font-label-md text-label-md text-on-surface-variant peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition-all">
-                  Student
-                </div>
-              </label>
-              <label className="cursor-pointer relative">
-                <input 
-                  className="peer sr-only" 
-                  name="role" 
-                  type="radio" 
-                  value="lecturer"
-                  checked={selectedRole === 'lecturer'}
-                  onChange={() => setSelectedRole('lecturer')}
-                />
-                <div className="text-center py-2 rounded font-label-md text-label-md text-on-surface-variant peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition-all">
-                  Lecturer
-                </div>
-              </label>
-              <label className="cursor-pointer relative">
-                <input 
-                  className="peer sr-only" 
-                  name="role" 
-                  type="radio" 
-                  value="admin"
-                  checked={selectedRole === 'admin'}
-                  onChange={() => setSelectedRole('admin')}
-                />
-                <div className="text-center py-2 rounded font-label-md text-label-md text-on-surface-variant peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition-all">
-                  Admin
-                </div>
-              </label>
-            </div>
 
             {/* Email Input */}
             <div>
